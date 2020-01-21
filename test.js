@@ -1,12 +1,12 @@
 var aaa = require("./commandLine.js")
 
-aaa.commands.hehe = () => {
-    console.log("hehe")
+aaa.commands.testGetter = () => {
+    console.log("test getter")
 }
 
 aaa.commands = {
-    haha : ()=>{
-        console.log("test")
+    testSetter : ()=>{
+        console.log("test setter")
     },
 }
 

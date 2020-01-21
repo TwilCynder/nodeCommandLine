@@ -1,8 +1,12 @@
 {
-  "name": "commandline",
+  "name": "@twilcynder/commandline",
   "version": "1.0.0",
-  "description": "A command interpreter for node",
+  "description": "A command line interpreter for node.js",
   "main": "commandLine.js",
+  "dependencies": {
+    "npm": "^6.13.6"
+  },
+  "devDependencies": {},
   "scripts": {
     "test": "node test.js"
   },
@@ -19,8 +23,5 @@
   "bugs": {
     "url": "https://github.com/TwilCynder/nodeCommandLine/issues"
   },
-  "homepage": "https://github.com/TwilCynder/nodeCommandLine#readme",
-  "dependencies": {
-    "npm": "^6.13.6"
-  }
+  "homepage": "https://github.com/TwilCynder/nodeCommandLine#readme"
 }

@@ -7,12 +7,6 @@ function print(chunk, encoding, callback){
 }
 
 var commands = {
-    oui : (argv) => {
-        console.log("test")
-        for (let i = 0; i < argv.length; i++){
-            console.log(argv[i]);
-        }
-    }
 }
 
 var env = {
