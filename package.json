@@ -1,0 +1,26 @@
+{
+  "name": "commandline",
+  "version": "1.0.0",
+  "description": "A command interpreter for node",
+  "main": "commandLine.js",
+  "scripts": {
+    "test": "node test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TwilCynder/nodeCommandLine.git"
+  },
+  "keywords": [
+    "commandLine",
+    "console"
+  ],
+  "author": "TwilCynder",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/TwilCynder/nodeCommandLine/issues"
+  },
+  "homepage": "https://github.com/TwilCynder/nodeCommandLine#readme",
+  "dependencies": {
+    "npm": "^6.13.6"
+  }
+}
