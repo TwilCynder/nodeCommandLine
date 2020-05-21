@@ -9,23 +9,6 @@ function print(chunk, encoding, callback){
 var commands = {
 }
 
-var env = {
-    get commands(){
-        return commands
-    },
-    set commands(val){
-        if (typeof val != "object") return false;
-        for (k in val){
-            if (val.hasOwnProperty(k) && typeof val[k] == "function"){
-                this.commands[k] = val[k]
-            }
-        }
-    },
-    prompt : ">"
-}
-
-
-
 function prompt(){
     if (typeof env.prompt == "string"){
         print(env.prompt);
@@ -43,6 +26,41 @@ function parseCommand(command){
     return [true, commands[words[0]](words.slice(1))];
 }
 
+var env = {
+    get commands(){
+        return commands
+    },
+    set commands(val){
+        if (typeof val != "object") return false;
+        for (k in val){
+            if (val.hasOwnProperty(k) && typeof val[k] == "function"){
+                this.commands[k] = val[k]
+            }
+        }
+    },
+    prompt : ">",
+    startLogging(){
+        process.stdout.clearLine();
+        process.stdout.cursorTo(0)
+        logging = true;
+    },
+    stopLogging(){
+        prompt()
+        logging = false;
+    }
+}
+
+var logging = false;
+var oldLog = console.log;
+console.log = function(...args){
+    if (!logging){
+        env.startLogging();
+        logging = true;
+    }
+    oldLog(...args)
+
+}
+
 env.start = function(){
     process.stdin.resume();
     process.stdin.setEncoding('utf8');
@@ -53,7 +71,7 @@ env.start = function(){
         if (!success){
             switch(res){
                 case errcodes.NOCOMMAND :
-                    console.log("Error : nonexistant command")
+                    console.log("Error : nonexistant command (" + more + ")");
             }  
         }
         prompt();
