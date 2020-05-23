@@ -1,5 +1,7 @@
+//TODO : guillemets
 var errcodes = {
     NOCOMMAND : 1,
+    COMMAND : 2
 }
 
 function print(chunk, encoding, callback){
@@ -71,6 +73,7 @@ env.start = function(){
         if (!success){
             switch(res){
                 case errcodes.NOCOMMAND :
+                    if (env.onMissingCommand && env.onMissingCommand()) return;
                     console.log("Error : nonexistant command (" + more + ")");
             }  
         }
