@@ -8,7 +8,7 @@ It simply allows your node application to read unix-style input on the terminal 
 All "commands" are basically functions, stored in a single hash : `commandLine.commands`, which acts a little bit like a `/bin` folder.
 Every method of this object is a command, it's name being the name of the command.
 
-Note that to add commands to the hash, you can just define them like with any other method (`commandLine.commands.my_command = function(){})`, or you can redefine the `commandLinecommands` property : instead of actually redefining it, if the new value is an object, every method of this new object will be added as commands. 
+Note that to add commands to the hash, you can just define them like with any other method (`commandLine.commands.my_command = function(){})`, or you can redefine the `commandLine.commands` property : instead of actually redefining it, if the new value is an object, every method of this new object will be added as commands. 
 ```javascript
 var cl = require("@twilcynder/commandline);
 ...
