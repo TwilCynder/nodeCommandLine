@@ -1,7 +1,5 @@
-//TODO : guillemets
 var errcodes = {
     NOCOMMAND : 1,
-    COMMAND : 2
 }
 
 function print(chunk, encoding, callback){
@@ -22,10 +20,15 @@ function prompt(){
 
 function parseCommand(command){
     let words = command.split(" ")
-
     if (typeof commands[words[0]] != "function") return [false,errcodes.NOCOMMAND,words[0]];
     
-    return [true, commands[words[0]](words.slice(1))];
+    let commandFunction = commands[words[0]];
+
+    let arg = (commandFunction.noArgsParse) ? 
+        ((words.length > 1) ? command.slice(command.indexOf(" ") + 1) : "") :
+        words.slice(1);
+
+    return [true, commandFunction(arg)];
 }
 
 var env = {
@@ -47,7 +50,26 @@ var env = {
         logging = true;
     },
     stopLogging(){
-        prompt()
+        if (logging){
+            prompt()
+            logging = false;
+        }
+    },
+    start(){
+        process.stdin.resume();
+        process.stdin.setEncoding('utf8');
+        prompt();
+    
+        process.stdin.on('data', function(chunk) {
+            let [success, res, more] = parseCommand(chunk.replace('\n', '').replace('\r', ''));
+            if (!success){
+                switch(res){
+                    case errcodes.NOCOMMAND :
+                        console.log("Error : nonexistant command (" + more + ")");
+                }  
+            }
+            prompt();
+        });
         logging = false;
     }
 }
@@ -60,26 +82,6 @@ console.log = function(...args){
         logging = true;
     }
     oldLog(...args)
-
 }
-
-env.start = function(){
-    process.stdin.resume();
-    process.stdin.setEncoding('utf8');
-    prompt();
-
-    process.stdin.on('data', function(chunk) {
-        let [success, res, more] = parseCommand(chunk.replace('\n', '').replace('\r', ''));
-        if (!success){
-            switch(res){
-                case errcodes.NOCOMMAND :
-                    if (env.onMissingCommand && env.onMissingCommand()) return;
-                    console.log("Error : nonexistant command (" + more + ")");
-            }  
-        }
-        prompt();
-    });
-}
-
 
 module.exports = env
