@@ -10,12 +10,16 @@ aaa.commands = {
     },
 }
 
-aaa.commands.test = (args) => {
-    console.log(typeof args);
+let test = (args) => {
     console.log(args);
 }
+test.noArgsParse = false;
 
-aaa.commands.test.noArgsParse = true;
+aaa.commands.test = test
+
+aaa.config = {
+    noArgsParse: false
+}
 
 /*
 setInterval(function() {

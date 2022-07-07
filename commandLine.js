@@ -17,6 +17,9 @@ function prompt(){
     }
 }
 
+var config = {
+    noArgsParse: false
+}
 
 function parseCommand(command){
     let words = command.split(" ")
@@ -24,7 +27,7 @@ function parseCommand(command){
     
     let commandFunction = commands[words[0]];
 
-    let arg = (commandFunction.noArgsParse) ? 
+    let arg = (config.noArgsParse || commandFunction.noArgsParse) ? 
         ((words.length > 1) ? command.slice(command.indexOf(" ") + 1) : "") :
         words.slice(1);
 
@@ -71,6 +74,12 @@ var env = {
             prompt();
         });
         logging = false;
+    },
+    get config(){
+        return config
+    },
+    set config(val){
+        if (typeof(val) == "object") config = val;
     }
 }
 
