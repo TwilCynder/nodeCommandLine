@@ -1,4 +1,4 @@
-//TODO : default exit command, SANITIZE COMMANDS (REMOVE SPACES)
+//TODO : autocompletion, actual doc (generate doc + multiple md files)
 
 var errcodes = {
     NOCOMMAND : 1,
