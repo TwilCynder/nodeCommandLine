@@ -37,6 +37,9 @@ After your command has finished executing, the prompt will be displayed again.
 #### The prompt
 The prompt is by default `>`, but can be changed by modifying the commandLine.prompt property. If the value of commandLine.prompt is a string, it will be taken as-is, and if it's a function it will be called and its return value considered as the prompt.
 
+## Namespaces
+Namespaces are basically named groups of commands. This allows you to have multiple commands with the same name, which is very likely to happen if your application is composed of multiple modules that add commands. 
+
 ## Logging
 Due to it heavily relying on the terminal, nodeCommandLine can badly interact with your logs. Specifically, if you are not careful you'll see a lot of prompts followed by a log from a completely unrealted part of your code, and the actual typing zone left without a prompt (which is not a real problem since the prompt is here only for informative or even simply aesthetic purpose).
 To avoid these problems, you simply need to call commandLine.startLogging() before using console.log() from a part of the code that's unrelated to commands (typically, an event call, or callback), and commandLine.stopLogging() after you've finished logging and you server goes back to a waiting state. 

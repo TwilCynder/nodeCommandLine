@@ -159,6 +159,8 @@ let namespaces = {
     default: default_namespace
 }
 
+let main_module = true;
+
 var env = {
     get commands(){
         return default_namespace.commands;
@@ -288,6 +290,31 @@ var env = {
             logging = false;
         }
     },
+    /**
+     * Attemps to claim the role of main module.
+     * @returns true if no one has called this method before.
+     */
+    takeMainModule(){
+        old_val = main_module;
+        main_module = false;
+        return old_val;
+    },
+    /**
+     * Returns whether someone has claimed the role of main module yet.
+     * @returns true true if no one has called takeMainModule before.
+     */
+    isMainModule(){
+        return main_module;
+    },
+    /**
+     * Returns the namespace where you should place your commands according to the main module system.
+     * Attemps to take the main module role.
+     * @param {string} name the name of a new namespace that will be created if the answer it turns out to be "a new namespace".
+     * @returns the default namespace if no one has called takeMainModule yet, a new namespace named <name> if it has been called.
+     */
+    preferredCommandsLocation(name){
+        return this.takeMainModule() ? default_namespace : this.addNamespace(name);
+    }
 }
 
 var logging = false;

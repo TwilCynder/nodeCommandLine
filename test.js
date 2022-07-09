@@ -1,5 +1,11 @@
 var aaa = require("./commandLine.js")
 
+let is_main_module// = aaa.takeMainModule();
+
+var test2 = require("./test2.js");
+
+console.log("Am I the main module ? : ", is_main_module ? "Yes" : "No");
+
 aaa.commands.testGetter = () => {
     console.log("test getter")
 }
