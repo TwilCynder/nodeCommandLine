@@ -4,6 +4,13 @@
 nodeCommandLine is a node module designed to allow devs to control a Nodejs server in real time via the terminal.  
 It simply allows your node application to read unix-style input on the terminal it has been launched from, and only requires you to directly define functions to call when a specific "command" is read.
 
+```
+node myServer.js 80 
+> 
+```
+
+Just to avoid confusion : unlike most other modules in the "CLI" category, which interact with the arguments you pass to your program when launchig it, this module allows you to make your program a command interpreter on it's own, interpreting commands written in the terminal **while it runs**, in parallel to other tasks (such as running a web server for example)
+
 ## Commands
 All "commands" are basically functions. By default (i.e. before you start using [namespaces](#namespaces), which you should still only do after reading this part), all commands are stored in a single table : `commandLine.commands`.  
 Every method of this object is a command, its key/name being the name of the command.

@@ -1,4 +1,5 @@
-//TODO : autocompletion, actual doc (generate doc + multiple md files)
+//TODO : autocompletion, actual doc (generate doc + multiple md files), 
+//description system (basically, make the commands more complex, like the commandline package)
 
 var errcodes = {
     NOCOMMAND : 1,
