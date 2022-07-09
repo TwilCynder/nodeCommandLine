@@ -75,11 +75,6 @@ function prompt(){
     }
 }
 
-var config = {
-    noArgsParse: false,
-    defaultToNamespace: true
-}
-
 /**
  * Executes a command with a give name with the given arguments string
  * @param {string} commandName the name of the command
@@ -141,6 +136,11 @@ function parseCommand(commandLine){
 
 }
 
+var config = {
+    noArgsParse: false,
+    defaultToNamespace: true
+}
+
 let default_namespace = new namespace("")
 
 let namespaces = {
@@ -156,17 +156,6 @@ var env = {
         default_namespace.addCommands(val);
     },
     prompt : ">",
-    startLogging(){
-        process.stdout.clearLine();
-        process.stdout.cursorTo(0)
-        logging = true;
-    },
-    stopLogging(){
-        if (logging){
-            prompt()
-            logging = false;
-        }
-    },
     get config(){
         return config
     },
@@ -178,9 +167,20 @@ var env = {
             }
         }
     },
+    /**
+     * Returns a namespace
+     * @param {string} name of the namespace
+     * @returns a namespace or undefined if the namespace does not exist
+     */
     getNamespace(name){
         return namespaces[name]
     },
+    /**
+     * Creates a new namespace and add it to the list.
+     * @param {string} name name of the new namespace
+     * @param {object} commands Optional. Table containing the commands in the new namespace.
+     * @returns 
+     */
     addNamespace(name, commands){
         let nsp = new namespace(name)
 
@@ -195,12 +195,25 @@ var env = {
 
         return nsp;
     },
+    /**
+     * Returns whether the given name matches an existing namespace
+     * @param {string} name 
+     * @returns a boolean
+     */
     isNamespace(name){
         return !!namespaces[name]
     },
+    /**
+     * Sets the new default namespace.
+     * @param {string} name name of the new default namespace (must be an existing namespace).
+     */
     setDefaultNamespace(name){
         this.defaultNamespace = name;
     },
+    /**
+     * Returns the current default namespace.
+     * @returns {namespace}
+     */
     getDefaultNamespace(){
         return this.defaultNamespace;
     },
@@ -209,6 +222,10 @@ var env = {
         if (this.isNamespace(name))
             default_namespace = namespaces[name];
     },
+    /**
+     * Starts the command interpretation process. 
+     * This means that from now on, data sent to stdin will be interpreted as commands.
+     */
     start(){
         process.stdin.resume();
         process.stdin.setEncoding('utf8');
@@ -229,6 +246,25 @@ var env = {
             prompt();
         });
         logging = false;
+    },
+    /**
+     * Call this before you start logging to the console in code that executes asychronously to command execution (i.e. any code not called by a command)
+     * The first call to console.log() automatically calls this if you didn't.
+     */
+    startLogging(){
+        process.stdout.clearLine();
+        process.stdout.cursorTo(0);
+        logging = true;
+    },
+    /**
+     * Call this when you have finished logging. It can be after every console.log, or after a sequence of console.logs that will execute in the same call.
+     * 
+     */
+    stopLogging(){
+        if (logging){
+            prompt()
+            logging = false;
+        }
     },
 }
 
