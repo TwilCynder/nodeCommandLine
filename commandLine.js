@@ -6,8 +6,13 @@ var errcodes = {
 }
 
 function splitInTwo(string, sep){
-    let index = string.indexOf(sep);  // Gets the first index where a space occours
+    let index = string.indexOf(sep);  // Gets the first index where a space occurs
     return (index > 0) ? [string.substr(0, index), string.substr(index + 1)] : [string, ""];
+}
+
+function splitInTwoWhitespace(string){
+    let [left, right] = splitInTwo(string, " ");
+    return [left, right.trimStart()];
 }
 
 function print(chunk, encoding, callback){
@@ -87,11 +92,11 @@ function parseCommandInContext(commandName, arguments, commandSpace){
 
     switch (typeof command){
         case "object": //our "command" is actually a commandspace, the first argument is the command name we are going to look for in this space
-            [commandName, arguments] = splitInTwo(arguments, " ");
+            [commandName, arguments] = splitInTwoWhitespace(arguments);
             return parseCommandInContext(commandName, arguments, command);
         case "function":
             let arg = (config.noArgsParse || command.noArgsParse) ? 
-                arguments : arguments.split(" ");
+                arguments : arguments.match(/\S+/g);
             return [true, command(arg)];
         default:
             return [false,errcodes.NOCOMMAND,commandName];
@@ -113,8 +118,15 @@ function parseCommandInNamespace(commandName, arguments, namespace){
     return parseCommandInContext(commandName, arguments, context.commands);
 }
 
+/**
+ * Parses a command line
+ * @param {string} commandLine 
+ * @returns 
+ */
 function parseCommand(commandLine){
-    let [commandName, arguments] = splitInTwo(commandLine, " ") //separating the command name and the arguments
+    commandLine = commandLine.trimStart();
+
+    let [commandName, arguments] = splitInTwoWhitespace(commandLine) //separating the command name and the arguments
 
     if (commandName.includes(":")){ //namespace syntax
         let namespace;
@@ -127,7 +139,7 @@ function parseCommand(commandLine){
         if (!result[0] && (result[1] == errcodes.NOCOMMAND)){ //the command does not exist in the default namespace
             if (config.defaultToNamespace){ //but the config says that in that case we default to treating the command name as a namespace name
                 let namespace = commandName;
-                [commandName, arguments] = splitInTwo(arguments) // and the first arg as the command name
+                [commandName, arguments] = splitInTwoWhitespace(arguments) // and the first arg as the command name
                 return parseCommandInNamespace(commandName, arguments, namespace);
             }
         }
