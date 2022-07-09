@@ -24,11 +24,11 @@ function addCommands(commandSpace, commands){
 }
 
 //no check
-function setCommand(commandSpace, command, name){
+function setCommand(commandSpace, name, command){
     commandSpace[name] = command;
 }
 
-class namespace {
+class Namespace {
     constructor(name) {
         let commands = {}
         this.name = name
@@ -49,16 +49,16 @@ class namespace {
                 console.error("CommandLine Error : attempt to add invalid value ")
                 return false
             }
-            setCommand(this.commands, arg2, arg1)
+            setCommand(this.commands, arg1, arg2)
         }
     }
 
-    setCommand(command, name){
+    setCommand(name, command){
         if (typeof command != "function" || name == undefined) {
             console.error("CommandLine Error : attempt to add invalid value ")
             return false
         } 
-        setCommand(this.commands, command, name)
+        setCommand(this.commands, name, command)
     }
 
     addCommands(commands){
@@ -141,7 +141,7 @@ var config = {
     defaultToNamespace: true
 }
 
-let default_namespace = new namespace("")
+let default_namespace = new Namespace("")
 
 let namespaces = {
     default: default_namespace
@@ -182,7 +182,7 @@ var env = {
      * @returns 
      */
     addNamespace(name, commands){
-        let nsp = new namespace(name)
+        let nsp = new Namespace(name)
 
         if (this.isNamespace(name)){
             console.warn(`CommandLine Warning : overwriting namespace ${name}.`);
@@ -212,7 +212,7 @@ var env = {
     },
     /**
      * Returns the current default namespace.
-     * @returns {namespace}
+     * @returns {Namespace}
      */
     getDefaultNamespace(){
         return this.defaultNamespace;
@@ -221,6 +221,16 @@ var env = {
     set defaultNamespace(name){
         if (this.isNamespace(name))
             default_namespace = namespaces[name];
+    },
+    /**
+     * Adds a default "exit" command to the default namespace
+     * @param {Namespace} namespace or to this one if specified.
+     */
+    enableExit(namespace){
+        namespace = (namespace instanceof Namespace) ? namespace : default_namespace;
+        namespace.setCommand("exit", ()=>{
+            process.exit(0);
+        })
     },
     /**
      * Starts the command interpretation process. 

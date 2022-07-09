@@ -40,6 +40,8 @@ aaa.addNamespace("nsp1").commands = {
     }
 }
 
+aaa.enableExit();
+
 //aaa.setDefaultNamespace("nsp1");
 
 /*
