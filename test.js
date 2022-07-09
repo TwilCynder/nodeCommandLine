@@ -17,9 +17,29 @@ test.noArgsParse = false;
 
 aaa.commands.test = test
 
+aaa.commands.pNsp = {
+    a: () => {
+        console.log("A");
+    },
+    b: () => {
+        console.log("B");
+    }
+}
+
 aaa.config = {
     noArgsParse: false
 }
+
+aaa.addNamespace("nsp1").commands = {
+    a: () => {
+        console.log("nsp1 A");
+    },
+    b: () => {
+        console.log("nsp1 B");
+    }
+}
+
+//aaa.setDefaultNamespace("nsp1");
 
 /*
 setInterval(function() {
@@ -27,6 +47,7 @@ setInterval(function() {
     aaa.stopLogging();
 }, 3000);
 */
+
 
 aaa.prompt = () => (new Date()).toDateString() + ">"
 aaa.logPrefix = true;
