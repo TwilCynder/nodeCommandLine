@@ -6,10 +6,17 @@ It simply allows your node application to read unix-style input on the terminal 
 
 ```
 node myServer.js 80 
-> 
+Running on port 80
+> restart
+Restarting server ...
+> view-connections-group testGroup
+Active sockets in group "testGroup" : 
+...
 ```
 
-Just to avoid confusion : unlike most other modules in the "CLI" category, which interact with the arguments you pass to your program when launchig it, this module allows you to make your program a command interpreter on it's own, interpreting commands written in the terminal **while it runs**, in parallel to other tasks (such as running a web server for example)
+Just to avoid confusion : unlike most other modules in the "CLI" category, which interact with the arguments you pass to your program when launchig it, this module allows you to make your program a command interpreter on it's own, interpreting commands written in the terminal **while it runs**, in parallel to other tasks (such as running a web server for example).
+
+It is especially useful on servers that maintain a connection with clients (e.g. websocket users)
 
 ## Commands
 All "commands" are basically functions. By default (i.e. before you start using [namespaces](#namespaces), which you should still only do after reading this part), all commands are stored in a single table : `commandLine.commands`.  
