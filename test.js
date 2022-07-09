@@ -17,6 +17,13 @@ test.noArgsParse = false;
 
 aaa.commands.test = test
 
+let testNAP = (args) => {
+    console.log(args);
+}
+testNAP.noArgsParse = true;
+
+aaa.commands.testNAP = testNAP
+
 aaa.commands.pNsp = {
     a: () => {
         console.log("A");
@@ -41,6 +48,18 @@ aaa.addNamespace("nsp1").commands = {
 }
 
 aaa.enableExit();
+
+function letsSayThisIsAMdoduleInitializer(namespace){
+    let module_specific_info = 12;
+
+    namespace.commands = {
+        ping: () => console.log("Module specific text : ", module_specific_info)
+    }
+}
+
+letsSayThisIsAMdoduleInitializer(aaa.addNamespace("GMBC"));
+
+letsSayThisIsAMdoduleInitializer(aaa);
 
 //aaa.setDefaultNamespace("nsp1");
 
