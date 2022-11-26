@@ -328,7 +328,8 @@ var env = {
                         break;
                 }  
             }
-            stopLogging()
+            logging = false;
+            prompt();
         });
         logging = false;
     },
