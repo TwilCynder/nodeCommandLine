@@ -37,6 +37,7 @@ cl.commands = {
 ```
 The code above will simply add command1 and command2 to the command list and keep all previous commands.
 
+
 ## The terminal
 To actually use the terminal, you first need to call `commandLine.start()`.
 A prompt will be displayed, and you can start typing commands. Commands are read unix-style : the first word (words being separated by simple spaces) is the command name, and all subsequent words are the arguments. CL will simply try to find a command with the right name (commandLine.commands[name]) and call it with an array containing all other words in the input line as its single argument (this argument in kind of like `argv` in C, except the command name is not included. There is no argc, since it's very easy to acess the length of an array in JavaScript. However, if the command function has the property noArgsParse set to true, CL will not pass an array of word to it, just the arguments string as-is.
@@ -87,6 +88,35 @@ CL provides a way for your modules to know if they can use the default namespace
 Basically, the idea is that everyone should calls this function and use the default namespace is it returned true, creating namespace if not.
 
 > That way, if you have your app's module, and an imported module that would also like to use the default namespace (simply to avoid having to type a namespace name in the terminal if it can be avoided), they can both call this function ; if you want the default namespace to be used by your app's module, you call `commandLine.takeMainModule()` *before requiring the second module*. When doing the same, the second module will know that your app already uses the default namespace and can use a new namespace instead.   
+
+## Properties and special commands
+Commands may have the following properties (as well as any property you want to add for your own purposes) : 
+- `noArgsParse` : if set to `true`, the arguments of this command will not be split into an array of words, but simply passed as a string, as-is.  
+- `description` : can be displayed by the `list` default command (see below)
+
+While commands can be simple functions, written as such, you may also construct them with the **Command** constructor : it takes two parameters, the actual function and an object containing all the commands properties.  
+
+### Nested commands
+Instead of a function, a command may also be a simple object (constructed with a basic `{}`), containing sub-commands. It must then be called with at least one word as argument, which is the name of the sub-command to call. 
+
+You can totally conbine that with the Command constructor : 
+
+```javascript
+namespace.commands = {
+    Hello : () => {console.log("Hello !")}
+    Nested : new Command(
+        {
+            A : new Command( args => console.log(args), {description: "A nested command !"}),
+            B : {
+                f : () => console.log("That's a lot of nesting"),
+                g : new Command(() => console.log("Lorem ipsum"), {description: "Call this with 'Nested B g [arguments]'"})
+            }
+        },{
+            description: "A nested command"
+        }
+    )
+}
+```
 
 ## Default commands
 commandLine offers premade, generic-use commands that can be added to any namespace, by calling the corresponding `commandLine.enableXXX(namespace)` function. `namespace` can either be a Namespace object or the name of a namespace. 

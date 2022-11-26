@@ -1,3 +1,4 @@
+const { Command } = require("./commandLine.js");
 var aaa = require("./commandLine.js")
 
 let is_main_module = aaa.takeMainModule();
@@ -50,7 +51,19 @@ aaa.addNamespace("nsp1").commands = {
     },
     b: () => {
         console.log("nsp1 B");
-    }
+    },
+    g : new aaa.Command(
+        {
+            a: new aaa.Command(() => console.log("Test G A")),
+            b: new aaa.Command((arg1, ...args) => {
+                console.log("Argument 1 :", arg1, "Other arguments", args);
+            }),
+        },
+        {
+            name: "G",
+            description: "Testing both nested commands and the Command class"
+        }
+    ),
 }
 
 aaa.enableExit();

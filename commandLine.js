@@ -26,7 +26,7 @@ function print(chunk, encoding, callback){
 function addCommands(commandSpace, commands){
     for (k in commands){
         if (commands.hasOwnProperty(k) && (typeof commands[k] == "function" || typeof commands[k] == "object")){
-            commandSpace[k] = commands[k]
+            setCommand(commandSpace, k, commands[k]);
         }
     }
 }
@@ -34,6 +34,14 @@ function addCommands(commandSpace, commands){
 //no check
 function setCommand(commandSpace, name, command){
     commandSpace[name] = command;
+    commandSpace[name].name = name;
+}
+
+class Command {
+    constructor(f, properties){
+        this.f = f,
+        Object.assign(this, properties)
+    }
 }
 
 class Namespace {
@@ -51,7 +59,7 @@ class Namespace {
 
     add(arg1, arg2){
         if (typeof arg1 == "object"){
-            addCommands(this.commands, arg1)
+            addCommands(this.commands, arg1);
         } else {
             if (typeof arg2 != "function" || arg1 == undefined) {
                 console.error("CommandLine Error : attempt to add invalid value ")
@@ -98,16 +106,7 @@ function prompt(){
     }
 }
 
-/**
- * Executes a command with a give name with the given arguments string
- * @param {string} commandName the name of the command
- * @param {string} arguments the arguments, in the form of the original string (not split yet)
- * @param {object} commandSpace the table where we are looking for the command
- * @returns [success, result, more] : a boolean indicating whether the call succeeded, the result of the function OR an error code, and more information if an error occured
- */
-function parseCommandInContext(commandName, arguments, commandSpace){
-    let command = commandSpace[commandName];
-
+function executeCommand(command, arguments){
     switch (typeof command){
         case "object": //our "command" is actually a commandspace, the first argument is the command name we are going to look for in this space
             [commandName, arguments] = splitInTwoWhitespace(arguments);
@@ -119,6 +118,24 @@ function parseCommandInContext(commandName, arguments, commandSpace){
         default:
             return [false,errcodes.NOCOMMAND,commandName];
     }
+}
+
+/**
+ * Executes a command with a give name with the given arguments string
+ * @param {string} commandName the name of the command
+ * @param {string} arguments the arguments, in the form of the original string (not split yet)
+ * @param {object} commandSpace the table where we are looking for the command
+ * @returns [success, result, more] : a boolean indicating whether the call succeeded, the result of the function OR an error code, and more information if an error occured
+ */
+function parseCommandInContext(commandName, arguments, commandSpace){
+    let command = commandSpace[commandName];
+
+    if (command instanceof Command){
+        return executeCommand(command.f, arguments);
+    }
+
+    return executeCommand(command, arguments);
+    
 }
 
 /**
@@ -357,7 +374,9 @@ var env = {
      */
     preferredCommandsLocation(name){
         return this.takeMainModule() ? default_namespace : this.addNamespace(name);
-    }
+    },
+    Command : Command,
+    C : Command,
 }
 
 var logging = false;
