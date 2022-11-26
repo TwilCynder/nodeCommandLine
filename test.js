@@ -1,6 +1,6 @@
 var aaa = require("./commandLine.js")
 
-let is_main_module// = aaa.takeMainModule();
+let is_main_module = aaa.takeMainModule();
 
 var test2 = require("./test2.js");
 
@@ -63,19 +63,24 @@ function letsSayThisIsAMdoduleInitializer(namespace){
     }
 }
 
+aaa.enableList()
+
 letsSayThisIsAMdoduleInitializer(aaa.addNamespace("GMBC"));
 
 letsSayThisIsAMdoduleInitializer(aaa);
 
 //aaa.setDefaultNamespace("nsp1");
 
-/*
+
 setInterval(function() {
-    console.log("tss")
+    //console.log("tss")
     aaa.stopLogging();
 }, 3000);
-*/
 
+
+let nsp = aaa.getNamespace("nsp1")
+nsp.commands.a.description = "test Description"
+nsp.getCommandList()
 
 aaa.prompt = () => (new Date()).toDateString() + ">"
 aaa.logPrefix = true;

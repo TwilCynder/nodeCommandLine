@@ -1,3 +1,5 @@
+var readline = require('readline');
+
 //TODO : autocompletion, actual doc (generate doc + multiple md files), 
 //description system (basically, make the commands more complex, like the commandline package)
 
@@ -37,7 +39,7 @@ function setCommand(commandSpace, name, command){
 class Namespace {
     constructor(name) {
         let commands = {}
-        this.name = name
+        this.name = name || "[Unnamed namespace]"
 
         Object.defineProperty(this, "commands", {
             get: () => { return commands },
@@ -70,6 +72,21 @@ class Namespace {
     addCommands(commands){
         if (typeof commands == "object")
             addCommands(this.commands, commands)
+    }
+
+    getCommandList(){
+        let res = this.name + '\n'
+        for (let c in this.commands){
+            if (this.commands.hasOwnProperty(c)){
+                let command = this.commands[c];
+                res += "- " + c
+                if (command && command.description){
+                    res+= " : " + command.description
+                }
+                res += '\n'
+            }
+        }
+        return res;
     }
 }
 
@@ -154,13 +171,20 @@ var config = {
     defaultToNamespace: true
 }
 
-let default_namespace = new Namespace("")
+let default_namespace = new Namespace("[default namespace]")
 
 let namespaces = {
     default: default_namespace
 }
 
 let main_module = true;
+
+function stopLogging(){
+    if (logging){
+        prompt()
+        logging = false;
+    }
+}
 
 var env = {
     get commands(){
@@ -247,6 +271,35 @@ var env = {
             process.exit(0);
         })
     },
+
+    /**
+     * Adds a default "exit" command to the default namespace
+     * @param {Namespace} namespace or to this one if specified.
+     */
+     enableList(namespace){
+        namespace = (namespace instanceof Namespace) ? namespace : default_namespace;
+        namespace.setCommand("list", ()=>{
+            for (let nsp of Object.values(namespaces)){
+                console.log("List of commands : ")
+                console.log(nsp.getCommandList())
+            }
+        })
+    },
+    /**
+     * Call this before you start logging to the console in code that executes asychronously to command execution (i.e. any code not called by a command)
+     * The first call to console.log() automatically calls this if you didn't.
+     */
+     startLogging(){
+        readline.clearLine();
+        readline.cursorTo(process.stdout, 0);
+        logging = true;
+    },
+    /**
+     * Call this when you have finished logging. It can be after every console.log, or after a sequence of console.logs that will execute in the same call.
+     * 
+     */
+    stopLogging : stopLogging
+    ,
     /**
      * Starts the command interpretation process. 
      * This means that from now on, data sent to stdin will be interpreted as commands.
@@ -268,28 +321,9 @@ var env = {
                         break;
                 }  
             }
-            prompt();
+            stopLogging()
         });
         logging = false;
-    },
-    /**
-     * Call this before you start logging to the console in code that executes asychronously to command execution (i.e. any code not called by a command)
-     * The first call to console.log() automatically calls this if you didn't.
-     */
-    startLogging(){
-        process.stdout.clearLine();
-        process.stdout.cursorTo(0);
-        logging = true;
-    },
-    /**
-     * Call this when you have finished logging. It can be after every console.log, or after a sequence of console.logs that will execute in the same call.
-     * 
-     */
-    stopLogging(){
-        if (logging){
-            prompt()
-            logging = false;
-        }
     },
     /**
      * Attemps to claim the role of main module.
