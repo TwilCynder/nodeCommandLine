@@ -88,6 +88,13 @@ Basically, the idea is that everyone should calls this function and use the defa
 
 > That way, if you have your app's module, and an imported module that would also like to use the default namespace (simply to avoid having to type a namespace name in the terminal if it can be avoided), they can both call this function ; if you want the default namespace to be used by your app's module, you call `commandLine.takeMainModule()` *before requiring the second module*. When doing the same, the second module will know that your app already uses the default namespace and can use a new namespace instead.   
 
+## Default commands
+commandLine offers premade, generic-use commands that can be added to any namespace, by calling the corresponding `commandLine.enableXXX(namespace)` function. `namespace` can either be a Namespace object or the name of a namespace. 
+
+- **exit** (call `enableExit(nsp)`) : closes the program.
+- **list** (call `enableList(nsp)`) : prints a list of all namespaces and their commands to stdout. 
+
+
 ## Configuration 
 CommandLine can be configured through the `commandLine.config` object, by changing its properties. You can also use `commandLine.config = {...}`, which will replace only the properties contained in the object you give. 
 

@@ -186,6 +186,15 @@ function stopLogging(){
     }
 }
 
+function enableCommand(namespace, name, command){
+    if (typeof namespace == "string"){
+        namespace = namespaces[namespace];
+        if (!namespace) throw 'Namespace ' + namespace + ' does not exist.'
+    }
+    namespace = (namespace instanceof Namespace) ? namespace : default_namespace;
+    namespace.setCommand(name, command);
+}
+
 var env = {
     get commands(){
         return default_namespace.commands;
@@ -266,8 +275,7 @@ var env = {
      * @param {Namespace} namespace or to this one if specified.
      */
     enableExit(namespace){
-        namespace = (namespace instanceof Namespace) ? namespace : default_namespace;
-        namespace.setCommand("exit", ()=>{
+        enableCommand(namespace, "exit", ()=>{
             process.exit(0);
         })
     },
@@ -277,8 +285,7 @@ var env = {
      * @param {Namespace} namespace or to this one if specified.
      */
      enableList(namespace){
-        namespace = (namespace instanceof Namespace) ? namespace : default_namespace;
-        namespace.setCommand("list", ()=>{
+        enableCommand(namespace, "list", ()=>{
             for (let nsp of Object.values(namespaces)){
                 console.log("List of commands : ")
                 console.log(nsp.getCommandList())
