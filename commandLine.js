@@ -106,7 +106,7 @@ function prompt(){
     }
 }
 
-function executeCommand(command, arguments){
+function executeCommand(command, arguments, commandName){
     switch (typeof command){
         case "object": //our "command" is actually a commandspace, the first argument is the command name we are going to look for in this space
             [commandName, arguments] = splitInTwoWhitespace(arguments);
@@ -116,7 +116,7 @@ function executeCommand(command, arguments){
                 arguments : arguments.match(/\S+/g);
             return [true, command(arg)];
         default:
-            return [false,errcodes.NOCOMMAND,commandName];
+            return [false,errcodes.NOCOMMAND,null];
     }
 }
 
@@ -131,10 +131,10 @@ function parseCommandInContext(commandName, arguments, commandSpace){
     let command = commandSpace[commandName];
 
     if (command instanceof Command){
-        return executeCommand(command.f, arguments);
+        return executeCommand(command.f, arguments, commandName);
     }
 
-    return executeCommand(command, arguments);
+    return executeCommand(command, arguments, commandName);
     
 }
 
