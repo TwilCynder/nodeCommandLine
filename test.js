@@ -15,6 +15,11 @@ aaa.commands = {
     testSetter : ()=>{
         console.log("test setter")
     },
+    testError(){
+        let v = null;
+        let a = v.a;
+        console.log(a);
+    }
 }
 
 let test = (args) => {

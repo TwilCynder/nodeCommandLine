@@ -5,7 +5,8 @@ var readline = require('readline');
 
 var errcodes = {
     NOCOMMAND : 1,
-    NONAMESPACE: 2
+    NONAMESPACE: 2,
+    EXCEPTION: 3
 }
 
 function splitInTwo(string, sep){
@@ -114,7 +115,19 @@ function executeCommand(command, arguments, commandName){
         case "function":
             let arg = (config.noArgsParse || command.noArgsParse) ? 
                 arguments : arguments.match(/\S+/g);
-            return [true, command(arg)];
+
+            try {
+                return [true, command(arg)];
+            } catch (err){
+                startLogging();
+                console.error("Uncaught exception while running command ", commandName + ". Exception : ");
+                console.error(err);
+                stopLogging();
+
+                return [false, errcodes.EXCEPTION];
+            }
+
+
         default:
             return [false,errcodes.NOCOMMAND,null];
     }
@@ -195,6 +208,13 @@ let namespaces = {
 }
 
 let main_module = true;
+
+var logging = false;
+function startLogging(){
+    readline.clearLine();
+    readline.cursorTo(process.stdout, 0);
+    logging = true;
+}
 
 function stopLogging(){
     if (logging){
@@ -313,10 +333,8 @@ var env = {
      * Call this before you start logging to the console in code that executes asychronously to command execution (i.e. any code not called by a command)
      * The first call to console.log() automatically calls this if you didn't.
      */
-     startLogging(){
-        readline.clearLine();
-        readline.cursorTo(process.stdout, 0);
-        logging = true;
+    startLogging(){
+        startLogging();
     },
     /**
      * Call this when you have finished logging. It can be after every console.log, or after a sequence of console.logs that will execute in the same call.
@@ -343,6 +361,8 @@ var env = {
                     case errcodes.NONAMESPACE :
                         console.error(`CommandLine Error : nonexistant namespace (${more})`);
                         break;
+                    case errcodes.EXCEPTION :
+                        console.error
                 }  
             }
             logging = false;
@@ -379,11 +399,10 @@ var env = {
     C : Command,
 }
 
-var logging = false;
 var oldLog = console.log;
 console.log = function(...args){
     if (!logging){
-        env.startLogging();
+        startLogging();
         logging = true;
     }
     oldLog(...args)
