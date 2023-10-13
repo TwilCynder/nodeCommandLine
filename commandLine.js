@@ -107,6 +107,13 @@ function prompt(){
     }
 }
 
+function handleException(err, commandName){
+    startLogging();
+    console.error("Uncaught exception while running command ", commandName + ". Exception : ");
+    console.error(err);
+    stopLogging();
+}
+
 function executeCommand(command, arguments, commandName){
     switch (typeof command){
         case "object": //our "command" is actually a commandspace, the first argument is the command name we are going to look for in this space
@@ -117,13 +124,18 @@ function executeCommand(command, arguments, commandName){
                 arguments : arguments.match(/\S+/g);
 
             try {
-                return [true, command(arg)];
-            } catch (err){
-                startLogging();
-                console.error("Uncaught exception while running command ", commandName + ". Exception : ");
-                console.error(err);
-                stopLogging();
+                let res = command(arg);
 
+                if (res instanceof Promise){
+                    res.catch((err)=>{
+                        handleException(err, commandName);
+                    })
+                }
+
+                return [true, res];
+            } catch (err){
+
+                handleException(err, commandName);  
                 return [false, errcodes.EXCEPTION];
             }
 
@@ -148,7 +160,6 @@ function parseCommandInContext(commandName, arguments, commandSpace){
     }
 
     return executeCommand(command, arguments, commandName);
-    
 }
 
 /**
@@ -230,6 +241,24 @@ function enableCommand(namespace, name, command){
     }
     namespace = (namespace instanceof Namespace) ? namespace : default_namespace;
     namespace.setCommand(name, command);
+}
+
+async function processInput(chunk){
+    let [success, res, more] = await parseCommand(chunk.replace('\n', '').replace('\r', ''));
+    if (!success){
+        switch(res){
+            case errcodes.NOCOMMAND :
+                console.error(`CommandLine Error : nonexistant command (${more})`);
+                break;
+            case errcodes.NONAMESPACE :
+                console.error(`CommandLine Error : nonexistant namespace (${more})`);
+                break;
+            case errcodes.EXCEPTION :
+                console.error
+        }  
+    }
+    logging = false;
+    prompt();
 }
 
 var env = {
@@ -351,22 +380,10 @@ var env = {
         process.stdin.setEncoding('utf8');
         prompt();
     
+        
+
         process.stdin.on('data', function(chunk) {
-            let [success, res, more] = parseCommand(chunk.replace('\n', '').replace('\r', ''));
-            if (!success){
-                switch(res){
-                    case errcodes.NOCOMMAND :
-                        console.error(`CommandLine Error : nonexistant command (${more})`);
-                        break;
-                    case errcodes.NONAMESPACE :
-                        console.error(`CommandLine Error : nonexistant namespace (${more})`);
-                        break;
-                    case errcodes.EXCEPTION :
-                        console.error
-                }  
-            }
-            logging = false;
-            prompt();
+            processInput(chunk);
         });
         logging = false;
     },
