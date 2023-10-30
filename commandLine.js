@@ -379,14 +379,23 @@ var env = {
     C : Command,
 }
 
-var logging = false;
-var oldLog = console.log;
-console.log = function(...args){
-    if (!logging){
-        env.startLogging();
-        logging = true;
+function wrapFunction(object, methodName){
+    var oldFunc = object[methodName];
+    object[methodName] = function(...args){
+        if (!logging){
+            env.startLogging();
+            logging = true;
+        }
+        oldFunc(...args)
     }
-    oldLog(...args)
 }
+
+wrapFunction(console, "error");
+wrapFunction(console, "log");
+wrapFunction(console, "warn");
+wrapFunction(console, "info");
+
+var logging = false;
+
 
 module.exports = env
