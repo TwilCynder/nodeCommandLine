@@ -1,20 +1,27 @@
 const { Command } = require("./commandLine.js");
-var aaa = require("./commandLine.js")
+var commandLine = require("./commandLine.js")
 
-let is_main_module = aaa.takeMainModule();
+let is_main_module = commandLine.takeMainModule();
 
 var test2 = require("./test2.js");
 
 console.log("Am I the main module ? : ", is_main_module ? "Yes" : "No");
 
-aaa.commands.testGetter = () => {
+commandLine.commands.testGetter = () => {
     console.log("test getter")
 }
 
-aaa.commands = {
+commandLine.commands = {
     testSetter : ()=>{
         console.log("test setter")
     },
+
+    startTimer : () => {
+        setTimeout(() => {
+            console.info("Ayo");
+            commandLine.stopLogging();
+        }, 2000);
+    }
 }
 
 let test = (args) => {
@@ -22,16 +29,16 @@ let test = (args) => {
 }
 test.noArgsParse = false;
 
-aaa.commands.test = test
+commandLine.commands.test = test
 
 let testNAP = (args) => {
     console.log(args);
 }
 testNAP.noArgsParse = true;
 
-aaa.commands.testNAP = testNAP
+commandLine.commands.testNAP = testNAP
 
-aaa.commands.pNsp = {
+commandLine.commands.pNsp = {
     a: () => {
         console.log("A");
     },
@@ -41,21 +48,21 @@ aaa.commands.pNsp = {
 }
 
 
-aaa.config = {
+commandLine.config = {
     noArgsParse: false
 }
 
-aaa.addNamespace("nsp1").commands = {
+commandLine.addNamespace("nsp1").commands = {
     a: () => {
         console.log("nsp1 A");
     },
     b: () => {
         console.log("nsp1 B");
     },
-    g : new aaa.Command(
+    g : new commandLine.Command(
         {
-            a: new aaa.Command(() => console.log("Test G A")),
-            b: new aaa.Command((arg1, ...args) => {
+            a: new commandLine.Command(() => console.log("Test G A")),
+            b: new commandLine.Command((arg1, ...args) => {
                 console.log("Argument 1 :", arg1, "Other arguments", args);
             }),
         },
@@ -66,7 +73,7 @@ aaa.addNamespace("nsp1").commands = {
     ),
 }
 
-aaa.enableExit();
+commandLine.enableExit();
 
 function letsSayThisIsAMdoduleInitializer(namespace){
     let module_specific_info = 12;
@@ -76,26 +83,26 @@ function letsSayThisIsAMdoduleInitializer(namespace){
     }
 }
 
-aaa.enableList()
+commandLine.enableList()
 
-letsSayThisIsAMdoduleInitializer(aaa.addNamespace("GMBC"));
+letsSayThisIsAMdoduleInitializer(commandLine.addNamespace("GMBC"));
 
-letsSayThisIsAMdoduleInitializer(aaa);
+letsSayThisIsAMdoduleInitializer(commandLine);
 
 //aaa.setDefaultNamespace("nsp1");
 
 
 setInterval(function() {
     //console.log("tss")
-    aaa.stopLogging();
+    commandLine.stopLogging();
 }, 3000);
 
 
-let nsp = aaa.getNamespace("nsp1")
+let nsp = commandLine.getNamespace("nsp1")
 nsp.commands.a.description = "test Description"
 nsp.getCommandList()
 
-aaa.prompt = () => (new Date()).toDateString() + ">"
-aaa.logPrefix = true;
+commandLine.prompt = () => (new Date()).toDateString() + ">"
+commandLine.logPrefix = true;
 
-aaa.start()
+commandLine.start()
