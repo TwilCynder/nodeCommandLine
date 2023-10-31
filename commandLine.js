@@ -124,95 +124,19 @@ class CommandResolutionError extends Error {
     }
 }
 
-
+/**
+ * Executes a command with the given arguments. The command might be an object, in which case it will be interpreted as a command set.  
+ * A command set is a set of named commands, which effectivelemnt works like a namespace ; the first argument is used as a command name within that set.
+ * @param {Command | Function} command 
+ * @param {string} arguments in single-string form
+ * @param {string} commandName name of the command, for error handling purposes
+ * @returns whatever the executed command returns
+ */
 function executeCommand(command, arguments, commandName){
-    if (command instanceof Command) command = command.f;
-
     switch (typeof command){
         case "object": //our "command" is actually a commandspace, the first argument is the command name we are going to look for in this space
             [commandName, arguments] = splitInTwoWhitespace(arguments);
-            return parseCommandInContext(commandName, arguments, command);
-        case "function":
-            let arg = (config.noArgsParse || command.noArgsParse) ? 
-                arguments : arguments.match(/\S+/g);
-            return command(arg);
-        default:
-            throw new CommandResolutionError(`nonexistant command (${commandName})`);
-    }
-}
-
-/**
- * Executes a command with a give name with the given arguments string
- * @param {string} commandName the name of the command
- * @param {string} arguments the arguments, in the form of the original string (not split yet)
- * @param {object} commandSpace the table where we are looking for the command
- * @returns [success, result, more] : a boolean indicating whether the call succeeded, the result of the function OR an error code, and more information if an error occured
- */
-function parseCommandInContext(commandName, arguments, commandSpace){
-    let command = commandSpace[commandName];
-
-    return executeCommand(command, arguments, commandName);
-    
-}
-
-/**
- * Tries executing the command with the given name with the given arguments string in the namespace with the given name, if exists.
- * @param {string} commandName the name of the command
- * @param {string} arguments the arguments, in the form of the original string (not split yet)
- * @param {string} namespace the name of a namespace
- * @returns [success, result, more] : a boolean indicating whether the call succeeded, the result of the function OR an error code, and more information if an error occured
- */
-function parseCommandInNamespace(commandName, arguments, namespace){
-    let context = namespaces[namespace];
-
-    if (!context) throw new CommandResolutionError(`nonexistant namespace (${namespace})`);
-
-    return parseCommandInContext(commandName, arguments, context.commands);
-}
-
-/**
- * Parses a command line
- * @param {string} commandLine 
- * @returns 
- */
-function parseCommand(commandLine){
-    commandLine = commandLine.trimStart();
-
-    let [commandName, arguments] = splitInTwoWhitespace(commandLine) //separating the command name and the arguments
-
-    if (commandName.includes(":")){ //namespace syntax
-        let namespace;
-        [namespace, commandName] = splitInTwo(commandName, ":");
-        
-        return parseCommandInNamespace(commandName, arguments, namespace)
-    } else {
-
-        let context = default_namespace.commands;
-        let command = context[commandName]; //on vole un peu le boulot de PCIC
-
-        if (command){
-            executeCommand(command, arguments, null)
-        }
-
-        let result = parseCommandInContext(commandName, arguments, default_namespace.commands);
-
-        if (!result[0] && (result[1] == statusCodes.NOCOMMAND)){ //the command does not exist in the default namespace
-            if (config.defaultToNamespace){ //but the config says that in that case we default to treating the command name as a namespace name
-                let namespace = commandName;
-                [commandName, arguments] = splitInTwoWhitespace(arguments) // and the first arg as the command name
-                return parseCommandInNamespace(commandName, arguments, namespace);
-            }
-        }
-        return result;
-    }
-
-}
-
-function executeCommand_(command, arguments, commandName){
-    switch (typeof command){
-        case "object": //our "command" is actually a commandspace, the first argument is the command name we are going to look for in this space
-            [commandName, arguments] = splitInTwoWhitespace(arguments);
-            parseCommandInCommandSpace_(command, commandName, arguments);
+            parseCommandInCommandSet(command, commandName, arguments);
             break;
         case "function":
             let arg = (config.noArgsParse || command.noArgsParse) ? 
@@ -225,26 +149,50 @@ function executeCommand_(command, arguments, commandName){
     }
 }
 
-function parseCommandInCommandSpace_(space, commandName, arguments){
+/**
+ * Looks for a command in a command set (a set of named commands) and executes it
+ * @param {object} set 
+ * @param {string} commandName 
+ * @param {string} arguments 
+ * @returns 
+ */
+function parseCommandInCommandSet(set, commandName, arguments){
     commandName = commandName.trim();
     if (!commandName){
         console.log("This is a command space, containing the following subcommands or sub-command spaces : ");
-        console.log(listCommandsInSpace(space));
+        console.log(listCommandsInSpace(set));
         return null;
     }
-    return parseCommandInContext_(space, commandName, arguments);
+    return parseCommandInContext(set, commandName, arguments);
 }
 
-function parseCommandInContext_(context, commandName, arguments){
+/**
+ * Looks for a command in a given context (which can be any table where commands are stored, so namespaces and command spaces) and executes it
+ * @param {object} context 
+ * @param {string} commandName 
+ * @param {string} arguments 
+ * @returns 
+ */
+function parseCommandInContext(context, commandName, arguments){
     let command = context[commandName];
-    return executeCommand_(command, arguments, commandName);
+    return executeCommand(command, arguments, commandName);
 }
 
-function getNamespace_(namespaceName){
+/**
+ * Finds a namespace by name.
+ * @param {string} namespaceName 
+ * @returns 
+ */
+function getNamespace(namespaceName){
     return namespaces[namespaceName];
 }
 
-function parseCommand_(commandLine){
+/**
+ * Parses a command line
+ * @param {string} commandLine 
+ * @returns 
+ */
+function parseCommand(commandLine){
     commandLine = commandLine.trim();
 
     if (!commandLine){
@@ -257,7 +205,7 @@ function parseCommand_(commandLine){
         let namespaceName;
         [namespaceName, commandName] = splitInTwo(commandName, ":");
 
-        let namespace = getNamespace_(namespaceName);
+        let namespace = getNamespace(namespaceName);
         if (!namespace) throw new CommandResolutionError(`nonexistant namespace (${namespaceName})`);
 
         commandName = commandName.trim();
@@ -265,22 +213,22 @@ function parseCommand_(commandLine){
             throw new CommandResolutionError("Empty command name");
         }
         
-        parseCommandInContext_(namespace.commands, commandName, arguments);
+        parseCommandInContext(namespace.commands, commandName, arguments);
     } else {
 
         let namespace = default_namespace;
         let command = namespace.commands[commandName];
 
         if (command){
-            executeCommand_(command, arguments, commandName);
+            executeCommand(command, arguments, commandName);
         } else { //the command does not exist in the default namespace
             if (config.defaultToNamespace){ //but the config says that in that case we default to treating the command name as a namespace name
                 let namespaceName = commandName;
                 [commandName, arguments] = splitInTwoWhitespace(arguments) // and the first arg as the command name
-                let namespace = getNamespace_(namespaceName);
+                let namespace = getNamespace(namespaceName);
                 if (!namespace) throw new CommandResolutionError(`${commandName} is neither a namespace or a command (in the default namespace)`);     
                 
-                return parseCommandInContext_(namespace.commands, commandName, arguments);
+                return parseCommandInContext(namespace.commands, commandName, arguments);
             }
         }
     }
@@ -288,7 +236,7 @@ function parseCommand_(commandLine){
 
 function parseInput(chunk){
     try {
-        let res = parseCommand_(chunk.replace('\n', '').replace('\r', ''));
+        let res = parseCommand(chunk.replace('\n', '').replace('\r', ''));
     } catch (err){
         if (err instanceof CommandResolutionError){
             console.error("CommandLine Error : ", err);
