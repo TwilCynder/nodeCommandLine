@@ -3,7 +3,8 @@ var readline = require('readline');
 //TODO : autocompletion, actual doc (generate doc + multiple md files), 
 //description system (basically, make the commands more complex, like the commandline package)
 
-var errcodes = {
+var statusCodes = {
+    OK: 0,
     NOCOMMAND : 1,
     NONAMESPACE: 2
 }
@@ -33,8 +34,28 @@ function addCommands(commandSpace, commands){
 
 //no check
 function setCommand(commandSpace, name, command){
+    if (name == "") {
+        console.error("Command name cannot be empty !");
+        return;
+    }
+
     commandSpace[name] = command;
     commandSpace[name].name = name;
+}
+
+function listCommandsInSpace(commandSpace){
+    let res = "";
+    for (let c in commandSpace){
+        if (commandSpace.hasOwnProperty(c)){
+            let command = commandSpace[c];
+            res += "- " + c
+            if (command && command.description){
+                res+= " : " + command.description
+            }
+            res += '\n'
+        }
+    } 
+    return res;
 }
 
 class Command {
@@ -84,16 +105,7 @@ class Namespace {
 
     getCommandList(){
         let res = this.name + '\n'
-        for (let c in this.commands){
-            if (this.commands.hasOwnProperty(c)){
-                let command = this.commands[c];
-                res += "- " + c
-                if (command && command.description){
-                    res+= " : " + command.description
-                }
-                res += '\n'
-            }
-        }
+        res += listCommandsInSpace(this.commands);
         return res;
     }
 }
@@ -106,7 +118,16 @@ function prompt(){
     }
 }
 
+class CommandResolutionError extends Error {
+    constructor(msg){
+        super(msg);
+    }
+}
+
+
 function executeCommand(command, arguments, commandName){
+    if (command instanceof Command) command = command.f;
+
     switch (typeof command){
         case "object": //our "command" is actually a commandspace, the first argument is the command name we are going to look for in this space
             [commandName, arguments] = splitInTwoWhitespace(arguments);
@@ -114,9 +135,9 @@ function executeCommand(command, arguments, commandName){
         case "function":
             let arg = (config.noArgsParse || command.noArgsParse) ? 
                 arguments : arguments.match(/\S+/g);
-            return [true, command(arg)];
+            return command(arg);
         default:
-            return [false,errcodes.NOCOMMAND,null];
+            throw new CommandResolutionError(`nonexistant command (${commandName})`);
     }
 }
 
@@ -129,10 +150,6 @@ function executeCommand(command, arguments, commandName){
  */
 function parseCommandInContext(commandName, arguments, commandSpace){
     let command = commandSpace[commandName];
-
-    if (command instanceof Command){
-        return executeCommand(command.f, arguments, commandName);
-    }
 
     return executeCommand(command, arguments, commandName);
     
@@ -148,7 +165,7 @@ function parseCommandInContext(commandName, arguments, commandSpace){
 function parseCommandInNamespace(commandName, arguments, namespace){
     let context = namespaces[namespace];
 
-    if (!context) return [false, errcodes.NONAMESPACE, namespace]
+    if (!context) throw new CommandResolutionError(`nonexistant namespace (${namespace})`);
 
     return parseCommandInContext(commandName, arguments, context.commands);
 }
@@ -169,9 +186,17 @@ function parseCommand(commandLine){
         
         return parseCommandInNamespace(commandName, arguments, namespace)
     } else {
+
+        let context = default_namespace.commands;
+        let command = context[commandName]; //on vole un peu le boulot de PCIC
+
+        if (command){
+            executeCommand(command, arguments, null)
+        }
+
         let result = parseCommandInContext(commandName, arguments, default_namespace.commands);
 
-        if (!result[0] && (result[1] == errcodes.NOCOMMAND)){ //the command does not exist in the default namespace
+        if (!result[0] && (result[1] == statusCodes.NOCOMMAND)){ //the command does not exist in the default namespace
             if (config.defaultToNamespace){ //but the config says that in that case we default to treating the command name as a namespace name
                 let namespace = commandName;
                 [commandName, arguments] = splitInTwoWhitespace(arguments) // and the first arg as the command name
@@ -181,6 +206,99 @@ function parseCommand(commandLine){
         return result;
     }
 
+}
+
+function executeCommand_(command, arguments, commandName){
+    switch (typeof command){
+        case "object": //our "command" is actually a commandspace, the first argument is the command name we are going to look for in this space
+            [commandName, arguments] = splitInTwoWhitespace(arguments);
+            parseCommandInCommandSpace_(command, commandName, arguments);
+            break;
+        case "function":
+            let arg = (config.noArgsParse || command.noArgsParse) ? 
+                arguments : arguments.match(/\S+/g);
+            return command(arg);
+        case "undefined":
+            throw new CommandResolutionError(`nonexistant command (${commandName})`);
+        default:
+            throw new CommandResolutionError(`nonexistent command ${commandName}. Found value of type ${typeof command}`);
+    }
+}
+
+function parseCommandInCommandSpace_(space, commandName, arguments){
+    commandName = commandName.trim();
+    if (!commandName){
+        console.log("This is a command space, containing the following subcommands or sub-command spaces : ");
+        console.log(listCommandsInSpace(space));
+        return null;
+    }
+    return parseCommandInContext_(space, commandName, arguments);
+}
+
+function parseCommandInContext_(context, commandName, arguments){
+    let command = context[commandName];
+    return executeCommand_(command, arguments, commandName);
+}
+
+function getNamespace_(namespaceName){
+    return namespaces[namespaceName];
+}
+
+function parseCommand_(commandLine){
+    commandLine = commandLine.trim();
+
+    if (!commandLine){
+        return;
+    }
+
+    let [commandName, arguments] = splitInTwoWhitespace(commandLine) //separating the command name and the arguments
+
+    if (commandName.includes(':')){ //namespace:command syntax
+        let namespaceName;
+        [namespaceName, commandName] = splitInTwo(commandName, ":");
+
+        let namespace = getNamespace_(namespaceName);
+        if (!namespace) throw new CommandResolutionError(`nonexistant namespace (${namespaceName})`);
+
+        commandName = commandName.trim();
+        if (!commandName){
+            throw new CommandResolutionError("Empty command name");
+        }
+        
+        parseCommandInContext_(namespace.commands, commandName, arguments);
+    } else {
+
+        let namespace = default_namespace;
+        let command = namespace.commands[commandName];
+
+        if (command){
+            executeCommand_(command, arguments, commandName);
+        } else { //the command does not exist in the default namespace
+            if (config.defaultToNamespace){ //but the config says that in that case we default to treating the command name as a namespace name
+                let namespaceName = commandName;
+                [commandName, arguments] = splitInTwoWhitespace(arguments) // and the first arg as the command name
+                let namespace = getNamespace_(namespaceName);
+                if (!namespace) throw new CommandResolutionError(`${commandName} is neither a namespace or a command (in the default namespace)`);     
+                
+                return parseCommandInContext_(namespace.commands, commandName, arguments);
+            }
+        }
+    }
+}
+
+function parseInput(chunk){
+    try {
+        let res = parseCommand_(chunk.replace('\n', '').replace('\r', ''));
+    } catch (err){
+        if (err instanceof CommandResolutionError){
+            console.error("CommandLine Error : ", err);
+        } else {
+            console.error("Error while running command : ", err);
+        }
+    }
+
+    logging = false;
+    prompt();
 }
 
 var config = {
@@ -303,8 +421,8 @@ var env = {
      */
      enableList(namespace){
         enableCommand(namespace, "list", ()=>{
+            console.log("List of commands : ")
             for (let nsp of Object.values(namespaces)){
-                console.log("List of commands : ")
                 console.log(nsp.getCommandList())
             }
         })
@@ -334,19 +452,7 @@ var env = {
         prompt();
     
         process.stdin.on('data', function(chunk) {
-            let [success, res, more] = parseCommand(chunk.replace('\n', '').replace('\r', ''));
-            if (!success){
-                switch(res){
-                    case errcodes.NOCOMMAND :
-                        console.error(`CommandLine Error : nonexistant command (${more})`);
-                        break;
-                    case errcodes.NONAMESPACE :
-                        console.error(`CommandLine Error : nonexistant namespace (${more})`);
-                        break;
-                }  
-            }
-            logging = false;
-            prompt();
+            parseInput(chunk);
         });
         logging = false;
     },
