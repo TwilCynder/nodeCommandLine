@@ -6,8 +6,11 @@ var readline = require('readline');
 var statusCodes = {
     OK: 0,
     NOCOMMAND : 1,
-    NONAMESPACE: 2
+    NONAMESPACE: 2,
+    EXCEPTION: 3
 }
+
+var logging = false;
 
 function splitInTwo(string, sep){
     let index = string.indexOf(sep);  // Gets the first index where a space occurs
@@ -118,10 +121,23 @@ function prompt(){
     }
 }
 
+function startLogging(){
+    readline.clearLine();
+    readline.cursorTo(process.stdout, 0);
+    logging = true;
+}
+
 class CommandResolutionError extends Error {
     constructor(msg){
         super(msg);
     }
+}
+
+function handleException(err, commandName){
+    startLogging();
+    console.error("Uncaught exception while running async command ", commandName + ". Exception : ");
+    console.error(err);
+    stopLogging();
 }
 
 /**
@@ -141,9 +157,22 @@ function executeCommand(command, arguments, commandName){
         case "function":
             let arg = (config.noArgsParse || command.noArgsParse) ? 
                 arguments : arguments.match(/\S+/g);
-            return command(arg);
+
+            let res = command(arg);
+
+            if (res instanceof Promise){
+                res.catch((err)=>{
+                    handleException(err, commandName);
+                })
+            }
+
+            return res;
+
+
         case "undefined":
             throw new CommandResolutionError(`nonexistant command (${commandName})`);
+
+
         default:
             throw new CommandResolutionError(`nonexistent command ${commandName}. Found value of type ${typeof command}`);
     }
@@ -262,6 +291,8 @@ let namespaces = {
 
 let main_module = true;
 
+var logging = false;
+
 function stopLogging(){
     if (logging){
         prompt()
@@ -379,10 +410,8 @@ var env = {
      * Call this before you start logging to the console in code that executes asychronously to command execution (i.e. any code not called by a command)
      * The first call to console.log() automatically calls this if you didn't.
      */
-     startLogging(){
-        readline.clearLine();
-        readline.cursorTo(process.stdout, 0);
-        logging = true;
+    startLogging(){
+        startLogging();
     },
     /**
      * Call this when you have finished logging. It can be after every console.log, or after a sequence of console.logs that will execute in the same call.
@@ -399,6 +428,8 @@ var env = {
         process.stdin.setEncoding('utf8');
         prompt();
     
+        
+
         process.stdin.on('data', function(chunk) {
             parseInput(chunk);
         });
@@ -437,7 +468,7 @@ function wrapFunction(object, methodName){
     var oldFunc = object[methodName];
     object[methodName] = function(...args){
         if (!logging){
-            env.startLogging();
+            startLogging();
             logging = true;
         }
         oldFunc(...args)
@@ -448,8 +479,6 @@ wrapFunction(console, "error");
 wrapFunction(console, "log");
 wrapFunction(console, "warn");
 wrapFunction(console, "info");
-
-var logging = false;
 
 
 module.exports = env

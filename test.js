@@ -21,6 +21,24 @@ commandLine.commands = {
             console.info("Ayo");
             commandLine.stopLogging();
         }, 2000);
+    },
+    testError(){
+        let v = null;
+        let a = v.a;
+        console.log(a);
+    },
+    async testAsyncError(){
+        return await new Promise((res, rej) => {
+            setTimeout(() => {
+                try {
+                    let v = null;
+                    let a = v.a;
+                    console.log(a);
+                } catch (e){
+                    rej(e);
+                }
+            }, 2000);
+        });
     }
 }
 
