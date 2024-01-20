@@ -156,7 +156,7 @@ function executeCommand(command, arguments, commandName){
             break;
         case "function":
             let arg = (config.noArgsParse || command.noArgsParse) ? 
-                arguments : arguments.match(/\S+/g);
+                arguments : (arguments.match(/\S+/g) || []);
 
             let res = command(arg);
 

@@ -15,7 +15,9 @@ commandLine.commands = {
     testSetter : ()=>{
         console.log("test setter")
     },
-
+    countArgs : (args) => {
+        console.log(args.length);
+    },
     startTimer : () => {
         setTimeout(() => {
             console.info("Ayo");
