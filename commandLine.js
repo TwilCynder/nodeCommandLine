@@ -12,6 +12,23 @@ var statusCodes = {
 
 var logging = false;
 
+let ArgsParseModes = {
+    None : "none",
+    Space : "space",
+    Quote : "quote"
+}
+
+var config = {
+    defaultToNamespace: true,
+    argsParseMode: ArgsParseModes.Quote,
+    get noArgsParse(){
+        return this.argsParseMode == ArgsParseModes.None;
+    },
+    set noArgsParse(b){
+        this.argsParseMode = b ? ArgsParseModes.None : ArgsParseModes.Quote;
+    }
+}
+
 function splitInTwo(string, sep){
     let index = string.indexOf(sep);  // Gets the first index where a space occurs
     return (index > 0) ? [string.substr(0, index), string.substr(index + 1)] : [string, ""];
@@ -127,6 +144,46 @@ function startLogging(){
     logging = true;
 }
 
+/**
+ * @param {string} string 
+ */
+function parseArgumentsQuoted(string){
+    let result = [];
+
+    let fieldStartPos = 0
+    let prevWasSeparator = true;
+    let openQuotes = false;
+
+    for (let i = 0; i < string.length; i++){
+        let c = string[i];
+
+        if (/^\s*$/.test(c) && !openQuotes){
+            if (!prevWasSeparator){
+                //end of a field
+                result.push(string.substring(fieldStartPos, i).replace(/\"/g, "", ));
+            }
+            prevWasSeparator = true;
+        } else {
+            let isQuote = c === "\"";
+
+            if (prevWasSeparator){
+                //start of a field
+                fieldStartPos = isQuote ? i + 1 : i ;
+            }
+
+            if (isQuote){
+                openQuotes = !openQuotes;
+            }
+
+            prevWasSeparator = false;
+        }
+    }
+
+    if (!prevWasSeparator) result.push(string.substring(fieldStartPos).replace(/\"/g, "", ));
+
+    return result;
+}
+
 class CommandResolutionError extends Error {
     constructor(msg){
         super(msg);
@@ -138,6 +195,20 @@ function handleException(err, commandName){
     console.error("Uncaught exception while running async command ", commandName + ". Exception : ");
     console.error(err);
     stopLogging();
+}
+
+function getArgsParseMode(command){
+    if (command.noArgsParse) return ArgsParseModes.None;
+    else if (command.argsParseMode) return command.argsParseMode;
+    else return config.argsParseMode;
+}
+
+function parseArguments(mode, arguments){
+    switch (mode){
+        case ArgsParseModes.None: return arguments;
+        case ArgsParseModes.Space: return arguments.match(/\S+/g) || [];
+        case ArgsParseModes.Quote: return parseArgumentsQuoted(arguments)
+    }
 }
 
 /**
@@ -155,8 +226,7 @@ function executeCommand(command, arguments, commandName){
             parseCommandInCommandSet(command, commandName, arguments);
             break;
         case "function":
-            let arg = (config.noArgsParse || command.noArgsParse) ? 
-                arguments : (arguments.match(/\S+/g) || []);
+            let arg = parseArguments(getArgsParseMode(command), arguments)
 
             let res = command(arg);
 
@@ -278,12 +348,7 @@ function parseInput(chunk){
     prompt();
 }
 
-var config = {
-    noArgsParse: false,
-    defaultToNamespace: true
-}
-
-let default_namespace = new Namespace("[default namespace]")
+let default_namespace = new Namespace("[default namespace]");
 
 let namespaces = {
     default: default_namespace
@@ -318,15 +383,15 @@ var env = {
         default_namespace.addCommands(val);
     },
     prompt : ">",
+    ArgsParseModes,
     get config(){
-        return config
+        return config;
     },
     set config(conf){
-        if (typeof(val) != "object") return false;
+        if (typeof(conf) != "object") return false;
         for (k in conf){
-            if (conf.hasOwnProperty(k)){
-                config[k] = conf[k]
-            }
+            console.log(k, conf[k], config[k]);
+            config[k] = conf[k]
         }
     },
     /**

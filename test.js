@@ -7,6 +7,14 @@ var test2 = require("./test2.js");
 
 console.log("Am I the main module ? : ", is_main_module ? "Yes" : "No");
 
+
+commandLine.config = {
+    noArgsParse: true,
+    argsParseMode: commandLine.ArgsParseModes.Quote,
+}
+
+console.log(commandLine.config);
+
 commandLine.commands.testGetter = () => {
     console.log("test getter")
 }
@@ -49,7 +57,13 @@ let test = (args) => {
 }
 test.noArgsParse = false;
 
-commandLine.commands.test = test
+let testSpace = (args) => {
+    console.log(args);
+}
+testSpace.argsParseMode = commandLine.ArgsParseModes.Space;
+
+commandLine.commands.test = test;
+commandLine.commands.testSpace = testSpace;
 
 let testNAP = (args) => {
     console.log(args);
@@ -65,11 +79,6 @@ commandLine.commands.pNsp = {
     b: () => {
         console.log("B");
     }
-}
-
-
-commandLine.config = {
-    noArgsParse: false
 }
 
 commandLine.addNamespace("nsp1").commands = {
