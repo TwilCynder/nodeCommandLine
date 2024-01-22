@@ -64,6 +64,9 @@ testSpace.argsParseMode = commandLine.ArgsParseModes.Space;
 
 commandLine.commands.test = test;
 commandLine.commands.testSpace = testSpace;
+commandLine.commands.testSpace2 = new commandLine.Command(args => console.log(args), {
+    argsParseMode: commandLine.ArgsParseModes.Space
+})
 
 let testNAP = (args) => {
     console.log(args);
