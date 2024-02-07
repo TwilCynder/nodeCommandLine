@@ -1,6 +1,6 @@
 {
   "name": "@twilcynder/commandline",
-  "version": "1.3.1",
+  "version": "1.3.2",
   "description": "A command line interpreter for node.js",
   "main": "commandLine.js",
   "scripts": {
