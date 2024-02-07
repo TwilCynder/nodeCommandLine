@@ -81,7 +81,7 @@ function listCommandsInSpace(commandSpace){
 class Command {
     constructor(f, properties){
         this.f = f,
-        Object.assign(this, properties)
+        Object.assign(this.f, properties)
     }
 }
 
@@ -222,6 +222,9 @@ function parseArguments(mode, arguments){
 function executeCommand(command, arguments, commandName){
     switch (typeof command){
         case "object": //our "command" is actually a commandspace, the first argument is the command name we are going to look for in this space
+
+            if (command instanceof Command) return executeCommand(command.f, arguments, commandName );
+
             [commandName, arguments] = splitInTwoWhitespace(arguments);
             parseCommandInCommandSet(command, commandName, arguments);
             break;
