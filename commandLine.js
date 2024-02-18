@@ -368,6 +368,11 @@ function stopLogging(){
     }
 }
 
+function logOnce(...args){
+    console.log(...args);
+    stopLogging();
+}
+
 function enableCommand(namespace, name, command){
     if (typeof namespace == "string"){
         namespace = namespaces[namespace];
@@ -487,6 +492,10 @@ var env = {
      */
     stopLogging : stopLogging
     ,
+    /**
+     * Logs its arguments then calls stopLogging
+     */
+    logOnce : logOnce,
     /**
      * Starts the command interpretation process. 
      * This means that from now on, data sent to stdin will be interpreted as commands.
